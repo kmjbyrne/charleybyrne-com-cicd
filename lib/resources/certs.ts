@@ -7,20 +7,14 @@ import { Construct } from "constructs";
 const FIXED_ACM_REGION = "us-east-1";
 
 export class FrontendWebsiteCertificates extends Construct {
-  private zone: IHostedZone;
-  constructor(
-    scope: Construct,
-    name: string,
-    domainName: string,
-    zone: IHostedZone,
-    props?: StackProps
-  ) {
-    super(scope, name);
-    const cert = new DnsValidatedCertificate(this, "FrontendDeploymentCert", {
-      domainName,
-      hostedZone: zone,
-      region: FIXED_ACM_REGION,
-      subjectAlternativeNames: [`*.${domainName}`],
-    });
-  }
+    private zone: IHostedZone;
+    constructor(scope: Construct, name: string, domainName: string, zone: IHostedZone, props?: StackProps) {
+        super(scope, name);
+        const cert = new DnsValidatedCertificate(this, "FrontendDeploymentCert", {
+            domainName,
+            hostedZone: zone,
+            region: FIXED_ACM_REGION,
+            subjectAlternativeNames: [`*.${domainName}`],
+        });
+    }
 }

@@ -5,11 +5,11 @@ import { PolicyStatement } from "aws-cdk-lib/aws-iam";
  * This is required for Route53 Hosted Zone operations such as lookups for zone by name.
  */
 export default new PolicyStatement({
-  actions: ["sts:AssumeRole"],
-  resources: ["*"],
-  conditions: {
-    StringEquals: {
-      "iam:ResourceTag/aws-cdk:bootstrap-role": "lookup",
+    actions: ["sts:AssumeRole"],
+    resources: ["*"],
+    conditions: {
+        StringEquals: {
+            "iam:ResourceTag/aws-cdk:bootstrap-role": "lookup",
+        },
     },
-  },
 });

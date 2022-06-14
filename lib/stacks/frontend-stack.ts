@@ -13,69 +13,58 @@ import WebsiteDistribution from "../resources/cloudfront";
 const DEFAULT_OBJECT = "index.html";
 
 interface FrontendWebsiteStackProps extends StackProps {
-  assets?: any;
+    assets?: any;
 }
 
 export class FrontendWebsiteStack extends Stack {
-  public bucket: Bucket;
-  public frontend: Bucket;
-  public distro: WebsiteDistribution;
+    public bucket: Bucket;
+    public frontend: Bucket;
+    public distro: WebsiteDistribution;
 
-  constructor(scope: Construct, id: string, props?: FrontendWebsiteStackProps) {
-    super(scope, id, props);
+    constructor(scope: Construct, id: string, props?: FrontendWebsiteStackProps) {
+        super(scope, id, props);
 
-    const zone = HostedZone.fromLookup(this, "HostedZone", {
-      domainName: Config.zone,
-    });
+        const zone = HostedZone.fromLookup(this, "HostedZone", {
+            domainName: Config.zone,
+        });
 
-    this.bucket = new Bucket(this, "FrontendDeploymentBucket", {
-      bucketName: (Config.domain as string).replace(/\./g, "-"),
-      publicReadAccess: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      websiteIndexDocument: DEFAULT_OBJECT,
-      websiteErrorDocument: DEFAULT_OBJECT,
-      autoDeleteObjects: true,
-    });
-    this.bucket.grantPublicAccess();
+        this.bucket = new Bucket(this, "FrontendDeploymentBucket", {
+            bucketName: (Config.domain as string).replace(/\./g, "-"),
+            publicReadAccess: true,
+            removalPolicy: RemovalPolicy.DESTROY,
+            websiteIndexDocument: DEFAULT_OBJECT,
+            websiteErrorDocument: DEFAULT_OBJECT,
+            autoDeleteObjects: true,
+        });
+        this.bucket.grantPublicAccess();
 
-    if (process.env.CDK_LOCAL_BUILD) {
-      new BucketDeployment(this, "FrontendDeployWebsite", {
-        sources: [
-          Source.asset(path.join(__dirname, process.env.CDK_LOCAL_BUILD)),
-        ],
-        destinationBucket: this.bucket,
-      });
+        if (process.env.CDK_LOCAL_BUILD) {
+            new BucketDeployment(this, "FrontendDeployWebsite", {
+                sources: [Source.asset(path.join(__dirname, process.env.CDK_LOCAL_BUILD))],
+                destinationBucket: this.bucket,
+            });
+        }
+
+        const cert = new DnsValidatedCertificate(this, "FrontendDeploymentCert", {
+            domainName: Config.domain,
+            hostedZone: zone,
+            region: "us-east-1",
+            subjectAlternativeNames: [`*.${Config.domain}`],
+        });
+
+        this.distro = new WebsiteDistribution(this, "FrontendDeploymentDistro", Config.domain, cert, "/", this.bucket);
+
+        const record = new ARecord(this, "FrontendAliasRecord", {
+            zone,
+            recordName: Config.domain,
+            target: RecordTarget.fromAlias(new CloudFrontTarget(this.distro.cloudfront)),
+        });
     }
 
-    const cert = new DnsValidatedCertificate(this, "FrontendDeploymentCert", {
-      domainName: Config.domain,
-      hostedZone: zone,
-      region: "us-east-1",
-      subjectAlternativeNames: [`*.${Config.domain}`],
-    });
-
-    this.distro = new WebsiteDistribution(
-      this,
-      "FrontendDeploymentDistro",
-      Config.domain,
-      cert,
-      "/",
-      this.bucket
-    );
-
-    const record = new ARecord(this, "FrontendAliasRecord", {
-      zone,
-      recordName: Config.domain,
-      target: RecordTarget.fromAlias(
-        new CloudFrontTarget(this.distro.cloudfront)
-      ),
-    });
-  }
-
-  public getBucketArn(): CfnOutput {
-    return new CfnOutput(this, "S3BucketName", {
-      exportName: `FrontendStackS3BucketName`,
-      value: this.bucket.bucketName,
-    });
-  }
+    public getBucketArn(): CfnOutput {
+        return new CfnOutput(this, "S3BucketName", {
+            exportName: `FrontendStackS3BucketName`,
+            value: this.bucket.bucketName,
+        });
+    }
 }

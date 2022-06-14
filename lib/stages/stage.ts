@@ -6,19 +6,19 @@ import { FrontendWebsiteStack } from "../stacks/frontend-stack";
 import { S3DeploymentStep } from "../steps/deployment";
 
 export class ApplicationStacks extends Stage {
-  public stack: FrontendWebsiteStack;
-  constructor(scope: Construct, name: string, props: any) {
-    super(scope, name, props);
-    this.stack = new FrontendWebsiteStack(this, "FrontendStack", {
-      assets: props.assets,
-    });
-  }
+    public stack: FrontendWebsiteStack;
+    constructor(scope: Construct, name: string, props: any) {
+        super(scope, name, props);
+        this.stack = new FrontendWebsiteStack(this, "FrontendStack", {
+            assets: props.assets,
+        });
+    }
 
-  public getBucket(): Bucket {
-    return this.stack.bucket;
-  }
+    public getBucket(): Bucket {
+        return this.stack.bucket;
+    }
 
-  public getBucketArn(): CfnOutput {
-    return this.stack.getBucketArn();
-  }
+    public getBucketArn(): CfnOutput {
+        return this.stack.getBucketArn();
+    }
 }
